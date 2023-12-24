@@ -171,9 +171,15 @@ btn_delete_game.pack(side=tk.LEFT)
 btn_add_game = tk.Button(frame, text="Ver BD", command=mostrar_partidas)
 btn_add_game.pack(side=tk.LEFT)
 
-# Crea una lista para mostrar las partidas
-listbox_partidas = tk.Listbox(window)
+# Crea un widget Scrollbar
+scrollbar = tk.Scrollbar(window)
+scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+# Crea un widget Listbox con la Scrollbar
+listbox_partidas = tk.Listbox(window, yscrollcommand=scrollbar.set)
 listbox_partidas.pack(fill=tk.BOTH, expand=1)
+
+scrollbar.config(command=listbox_partidas.yview)
 
 # Bind the function to listbox
 listbox_partidas.bind('<<ListboxSelect>>', on_select)
