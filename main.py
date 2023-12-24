@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
+from tkinter import ttk
 
 from chess import svg
 
@@ -45,11 +46,11 @@ def add_game():
         update_games_list()
 
 def view_game():
-    # Comprueba si hay un elemento seleccionado
-    if listbox_partidas.curselection():
-        # Obtiene el índice del elemento seleccionado
-        index = listbox_partidas.curselection()[0]
-        
+    if treeview_partidas.selection():
+        item = treeview_partidas.selection()[0]
+        item_data = treeview_partidas.item(item)
+        text_value = item_data['text']
+
         # Crea una conexión a la base de datos SQLite
         conn = sqlite3.connect('partidas.db')
         c = conn.cursor()
@@ -57,7 +58,7 @@ def view_game():
         # Obtiene el PGN de la partida a visualizar
         c.execute('SELECT pgn FROM partidas')
         partidas = c.fetchall()
-        pgn_partida = partidas[index][0]
+        pgn_partida = partidas[int(text_value)-1][0]
 
         # Lee la partida PGN
         partida = chess.pgn.read_game(io.StringIO(pgn_partida))
@@ -69,50 +70,51 @@ def view_game():
         ventana_partida.title(f"{blancas} VS {negras}")
 
         ventana_partida.mainloop()
-
 def delete_game():
     # Comprueba si hay un elemento seleccionado
-    if listbox_partidas.curselection():
-        # Obtiene el índice del elemento seleccionado
-        index = listbox_partidas.curselection()[0]
-        
+    if treeview_partidas.selection():
+        # Obtiene el ítem seleccionado
+        item = treeview_partidas.selection()[0]
+        item_data = treeview_partidas.item(item)
+        text_value = item_data['text']
+
         # Crea una conexión a la base de datos SQLite
         conn = sqlite3.connect('partidas.db')
         c = conn.cursor()
 
-        # Obtiene el ID de la partida a eliminar
-        c.execute('SELECT id FROM partidas')
-        ids = c.fetchall()
-        id_partida = ids[index][0]
+        id_partida = text_value
 
         # Elimina la partida de la base de datos
-        c.execute('DELETE FROM partidas WHERE id = ?', (id_partida,))
+        try:
+            c.execute('DELETE FROM partidas WHERE id = ?', (id_partida,))
+            print(f"DELETE FROM partidas WHERE id = {id_partida}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
         # Guarda los cambios y cierra la conexión a la base de datos
         conn.commit()
         conn.close()
 
-        # Elimina el elemento de la lista
-        listbox_partidas.delete(index)
-
-        # print("Deleted")
-
+        # Elimina el ítem del Treeview
+        treeview_partidas.delete(item)
 def update_games_list():
     # Crea una conexión a la base de datos SQLite
     conn = sqlite3.connect('partidas.db')
     c = conn.cursor()
 
     # Obtiene todas las partidas de la base de datos
-    c.execute('SELECT pgn FROM partidas')
+    c.execute('SELECT id, pgn FROM partidas')
     partidas = c.fetchall()
 
     # Limpia la lista de partidas
-    listbox_partidas.delete(0, tk.END)
+    for i in treeview_partidas.get_children():
+        treeview_partidas.delete(i)
 
     # Añade las partidas a la lista
     for partida in partidas:
+
         # Lee la partida PGN
-        partida_pgn = chess.pgn.read_game(io.StringIO(partida[0]))
+        partida_pgn = chess.pgn.read_game(io.StringIO(partida[1]))
 
         # Extrae los nombres, el resultado, el ELO, la fecha y el evento de la partida
         blancas = partida_pgn.headers['White']
@@ -123,10 +125,8 @@ def update_games_list():
         fecha = partida_pgn.headers['Date']
         evento = partida_pgn.headers['Event']
 
-        # Formatea la información para mostrarla en la lista
-        info_partida = f"{evento}, {fecha}, ({elo_blancas}) {blancas} {resultado} {negras} ({elo_negras})"
-
-        listbox_partidas.insert(tk.END, info_partida)
+        # Inserta la información en el Treeview
+        treeview_partidas.insert('', 'end', text=str(partida[0]), values=(evento, fecha, elo_blancas, blancas, resultado, negras, elo_negras))
 
 def mostrar_partidas():
     # Crea una conexión a la base de datos SQLite
@@ -141,14 +141,7 @@ def mostrar_partidas():
     for id in ids:
         print(id[0])
 
-def on_select(event):
-    # Get selected line index
-    index = listbox_partidas.curselection()[0]
-    
-    # Get the line's text
-    text = listbox_partidas.get(index)
 
-    # print(f"You selected item {index}: {text}")
 
 window = tk.Tk()
 window.title("Chess App")
@@ -171,18 +164,40 @@ btn_delete_game.pack(side=tk.LEFT)
 btn_add_game = tk.Button(frame, text="Ver BD", command=mostrar_partidas)
 btn_add_game.pack(side=tk.LEFT)
 
+
 # Crea un widget Scrollbar
 scrollbar = tk.Scrollbar(window)
 scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-# Crea un widget Listbox con la Scrollbar
-listbox_partidas = tk.Listbox(window, yscrollcommand=scrollbar.set)
-listbox_partidas.pack(fill=tk.BOTH, expand=1)
+treeview_partidas = ttk.Treeview(window, yscrollcommand=scrollbar.set)
 
-scrollbar.config(command=listbox_partidas.yview)
+# Define las columnas
+treeview_partidas['columns'] = ("Evento", "Fecha","ELO Jugador 1" ,"Jugador 1", "Resultado", "Jugador 2", "ELO Jugador 2")
 
-# Bind the function to listbox
-listbox_partidas.bind('<<ListboxSelect>>', on_select)
+# Formatea las columnas
+treeview_partidas.column("#0", width=0, stretch=tk.NO)
+treeview_partidas.column("Evento", anchor=tk.W, width=80)
+treeview_partidas.column("Fecha", anchor=tk.W, width=40)
+treeview_partidas.column("ELO Jugador 1", anchor=tk.W, width=20)
+treeview_partidas.column("Jugador 1", anchor=tk.W, width=80)
+treeview_partidas.column("Resultado", anchor=tk.W, width=20)
+treeview_partidas.column("Jugador 2", anchor=tk.W, width=80)
+treeview_partidas.column("ELO Jugador 2", anchor=tk.W, width=20)
+
+# Crea los encabezados de las columnas
+treeview_partidas.heading("#0", text="", anchor=tk.W)
+treeview_partidas.heading("Evento", text="Evento", anchor=tk.W)
+treeview_partidas.heading("Fecha", text="Fecha", anchor=tk.W)
+treeview_partidas.heading("ELO Jugador 1", text="ELO Jugador 1", anchor=tk.W)
+treeview_partidas.heading("Jugador 1", text="Jugador 1", anchor=tk.W)
+treeview_partidas.heading("Resultado", text="Resultado", anchor=tk.W)
+treeview_partidas.heading("Jugador 2", text="Jugador 2", anchor=tk.W)
+treeview_partidas.heading("ELO Jugador 2", text="ELO Jugador 2", anchor=tk.W)
+
+treeview_partidas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+# Conecta la Scrollbar al Treeview
+scrollbar.config(command=treeview_partidas.yview)
 
 def crear_tabla_partidas():
     conn = sqlite3.connect('partidas.db')
@@ -199,6 +214,7 @@ def crear_tabla_partidas():
 
 
 crear_tabla_partidas()
+
 update_games_list()
 
 window.mainloop()
