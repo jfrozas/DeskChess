@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
 
+from chess import svg
+
 import sqlite3
 import chess.pgn
 
@@ -43,7 +45,30 @@ def add_game():
         update_games_list()
 
 def view_game():
-    pass
+    # Comprueba si hay un elemento seleccionado
+    if listbox_partidas.curselection():
+        # Obtiene el índice del elemento seleccionado
+        index = listbox_partidas.curselection()[0]
+        
+        # Crea una conexión a la base de datos SQLite
+        conn = sqlite3.connect('partidas.db')
+        c = conn.cursor()
+
+        # Obtiene el PGN de la partida a visualizar
+        c.execute('SELECT pgn FROM partidas')
+        partidas = c.fetchall()
+        pgn_partida = partidas[index][0]
+
+        # Lee la partida PGN
+        partida = chess.pgn.read_game(io.StringIO(pgn_partida))
+        blancas = partida.headers['White']
+        negras = partida.headers['Black']
+
+        # Crea una nueva ventana para mostrar la partida
+        ventana_partida = tk.Toplevel(window)
+        ventana_partida.title(f"{blancas} VS {negras}")
+
+        ventana_partida.mainloop()
 
 def delete_game():
     # Comprueba si hay un elemento seleccionado
