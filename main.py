@@ -45,8 +45,12 @@ def add_game():
 
         update_games_list()
 
+
+
 def view_game():
     if treeview_partidas.selection():
+        board = chess.Board()
+
         item = treeview_partidas.selection()[0]
         item_data = treeview_partidas.item(item)
         text_value = item_data['text']
@@ -56,20 +60,109 @@ def view_game():
         c = conn.cursor()
 
         # Obtiene el PGN de la partida a visualizar
-        c.execute('SELECT pgn FROM partidas')
+        c.execute('SELECT pgn FROM partidas WHERE id = ?', text_value)
         partidas = c.fetchall()
-        pgn_partida = partidas[int(text_value)-1][0]
 
+        pgn_partida = partidas[0][0]
+        
         # Lee la partida PGN
         partida = chess.pgn.read_game(io.StringIO(pgn_partida))
-        blancas = partida.headers['White']
-        negras = partida.headers['Black']
+
+        # Convierte los movimientos de la partida en una lista
+        movimientos = list(partida.mainline_moves())
+        
+        # Obtiene el movimiento actual
+        indice_actual = 0
 
         # Crea una nueva ventana para mostrar la partida
         ventana_partida = tk.Toplevel(window)
-        ventana_partida.title(f"{blancas} VS {negras}")
+        ventana_partida.title(f"{partida.headers['White']} VS {partida.headers['Black']}")
+
+        # Crea cuatro frames
+        frame_tablero = tk.Frame(ventana_partida)
+        frame_jugadas = tk.Frame(ventana_partida)
+        frame_modulo = tk.Frame(ventana_partida)
+        frame_vacio = tk.Frame(ventana_partida)
+
+        # Coloca los frames en la ventana
+        frame_tablero.grid(row=0, column=0, sticky='nsew')
+        frame_jugadas.grid(row=0, column=1, sticky='nsew')
+        frame_modulo.grid(row=1, column=0, sticky='nsew')
+        frame_vacio.grid(row=1, column=1, sticky='nsew')
+
+        # Configura las filas y columnas para que se expandan proporcionalmente
+        ventana_partida.grid_rowconfigure(0, weight=1)
+        ventana_partida.grid_rowconfigure(1, weight=1)
+        ventana_partida.grid_columnconfigure(0, weight=1)
+        ventana_partida.grid_columnconfigure(1, weight=1)
+
+        canvas = tk.Canvas(frame_tablero, width=400, height=400)
+        canvas.pack()
+
+        # Dibuja el tablero en el Canvas
+        def draw_board(board):
+            # Borra todo del Canvas
+            canvas.delete("all")
+
+            # Dibuja los cuadrados del tablero
+            for i in range(8):
+                for j in range(8):
+                    color = 'white' if (i+j)%2 == 0 else 'gray'
+                    canvas.create_rectangle(i*50, j*50, (i+1)*50, (j+1)*50, fill=color)
+
+            # Dibuja las piezas
+            for i in range(8):
+                for j in range(8):
+                    piece = board.piece_at(chess.square(i, 7-j))
+                    if piece is not None:
+                        canvas.create_text(i*50+25, j*50+25, text=str(piece))
+
+        def next_move():
+            nonlocal indice_actual
+            if indice_actual < len(movimientos):
+                board.push(movimientos[indice_actual])
+                indice_actual += 1
+                draw_board(board)
+
+        def previous_move():
+            nonlocal indice_actual
+            if indice_actual > 0:
+                indice_actual -= 1
+                board.pop()
+                draw_board(board)
+
+        # Crea un widget Scrollbar
+        scrollbar = tk.Scrollbar(frame_jugadas)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        listbox = tk.Listbox(frame_jugadas, height= 20)
+        listbox.pack(fill=tk.BOTH)
+
+        # Añade las jugadas al frame
+        for i in range(0, len(movimientos), 2):
+            turno = i // 2 + 1
+            movimiento_blancas = movimientos[i]
+            if i + 1 < len(movimientos):
+                movimiento_negras = movimientos[i + 1]
+            else:
+                movimiento_negras = ''
+            jugada = f"{turno}. {movimiento_blancas} {movimiento_negras}"
+            listbox.insert(tk.END, jugada)
+
+        btn_previous_move = tk.Button(frame_tablero, text="Previous", command=previous_move)
+        btn_previous_move.pack(side=tk.LEFT)
+
+        btn_next_move = tk.Button(frame_tablero, text="Next", command=next_move)
+        btn_next_move.pack(side=tk.LEFT)
+
+        scrollbar.config(command=listbox.yview)
+
+        draw_board(board)
 
         ventana_partida.mainloop()
+
+
+
 def delete_game():
     # Comprueba si hay un elemento seleccionado
     if treeview_partidas.selection():
@@ -97,6 +190,8 @@ def delete_game():
 
         # Elimina el ítem del Treeview
         treeview_partidas.delete(item)
+
+
 def update_games_list():
     # Crea una conexión a la base de datos SQLite
     conn = sqlite3.connect('partidas.db')
