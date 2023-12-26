@@ -1,6 +1,8 @@
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import messagebox, filedialog
 from tkinter import ttk
+
+from chess import svg
 
 import sqlite3
 import chess.pgn
@@ -66,8 +68,9 @@ def view_game():
         conn = sqlite3.connect('partidas.db')
         c = conn.cursor()
 
+        print(text_value)
         # Obtiene el PGN de la partida a visualizar
-        c.execute('SELECT pgn FROM partidas WHERE id = ?', text_value)
+        c.execute('SELECT pgn FROM partidas WHERE id = ?', (text_value,))
         partidas = c.fetchall()
 
         pgn_partida = partidas[0][0]
