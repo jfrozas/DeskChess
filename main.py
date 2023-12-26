@@ -14,8 +14,6 @@ from PIL import ImageTk, Image
 
 import io
 
-
-
 def add_game():
     # Pide al usuario un archivo
     ruta_archivo = filedialog.askopenfilename(filetypes=[("PGN files", "*.pgn")])
@@ -68,7 +66,6 @@ def view_game():
         conn = sqlite3.connect('partidas.db')
         c = conn.cursor()
 
-        print(text_value)
         # Obtiene el PGN de la partida a visualizar
         c.execute('SELECT pgn FROM partidas WHERE id = ?', (text_value,))
         partidas = c.fetchall()
@@ -324,7 +321,7 @@ def mostrar_partidas():
 engine = chess.engine.SimpleEngine.popen_uci("stockfish/stockfish-windows-x86-64-avx2.exe")
 
 window = tk.Tk()
-window.title("Chess App")
+window.title("DeskChess")
 
 # Ajusta el tamaño de la ventana a 1920x1080
 window.geometry("1000x800")
@@ -341,8 +338,8 @@ btn_view_game.pack(side=tk.LEFT)
 btn_delete_game = tk.Button(frame, text="Eliminar partida", command=delete_game)
 btn_delete_game.pack(side=tk.LEFT)
 
-btn_add_game = tk.Button(frame, text="Ver BD", command=mostrar_partidas)
-btn_add_game.pack(side=tk.LEFT)
+# btn_add_game = tk.Button(frame, text="Ver BD", command=mostrar_partidas)
+# btn_add_game.pack(side=tk.LEFT)
 
 
 # Crea un widget Scrollbar
@@ -356,7 +353,7 @@ treeview_partidas['columns'] = ("Evento", "Fecha","ELO Jugador 1" ,"Jugador 1", 
 
 # Formatea las columnas
 treeview_partidas.column("#0", width=0, stretch=tk.NO)
-treeview_partidas.column("Evento", anchor=tk.W, width=80)
+treeview_partidas.column("Evento", anchor=tk.W, width=100)
 treeview_partidas.column("Fecha", anchor=tk.W, width=40)
 treeview_partidas.column("ELO Jugador 1", anchor=tk.W, width=20)
 treeview_partidas.column("Jugador 1", anchor=tk.W, width=80)
