@@ -1,6 +1,6 @@
 # DeskChess
 
-Aplicacion para el almacenamiento y visualizacion de partidas de ajedrez en formato PGN.
+Aplicacion para el almacenamiento y visualización de partidas de ajedrez en formato PGN.
 
 ## Requisitos
 
@@ -9,7 +9,7 @@ Pillow
 tkinter
 sqlite3
 
-Normalmente tkinter y sqlite ya vienen instaladas con la distribucion de python.
+Normalmente tkinter y sqlite ya vienen instaladas con la distribución de python.
 
 ```bash
 pip install -r requirements.txt
