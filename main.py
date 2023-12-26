@@ -1,13 +1,18 @@
 import tkinter as tk
-from tkinter import messagebox, filedialog
+from tkinter import filedialog
 from tkinter import ttk
-
-from chess import svg
 
 import sqlite3
 import chess.pgn
+import chess.engine
+
+import os
+
+from PIL import ImageTk, Image
 
 import io
+
+
 
 def add_game():
     # Pide al usuario un archivo
@@ -51,6 +56,8 @@ def view_game():
     if treeview_partidas.selection():
         board = chess.Board()
 
+        images = {}
+
         item = treeview_partidas.selection()[0]
         item_data = treeview_partidas.item(item)
         text_value = item_data['text']
@@ -73,6 +80,8 @@ def view_game():
         
         # Obtiene el movimiento actual
         indice_actual = 0
+
+        variable = tk.StringVar(value="No se ha hecho ningun movimiento")
 
         # Crea una nueva ventana para mostrar la partida
         ventana_partida = tk.Toplevel(window)
@@ -115,28 +124,55 @@ def view_game():
                 for j in range(8):
                     piece = board.piece_at(chess.square(i, 7-j))
                     if piece is not None:
-                        canvas.create_text(i*50+25, j*50+25, text=str(piece))
+                        if piece.color == chess.WHITE:
+                            filename = os.path.join("Piezas", f"white_{str(piece)}.png")
+                        else:
+                            filename = os.path.join("Piezas", f"black_{str(piece)}.png")
+                        image = Image.open(filename)
+                        image = image.resize((50, 50), Image.ANTIALIAS)
+                        photo = ImageTk.PhotoImage(image)
+                        images[(i, j)] = photo
+                        canvas.create_image(i*50+25, j*50+25, image=photo)
 
         def next_move():
             nonlocal indice_actual
             if indice_actual < len(movimientos):
                 board.push(movimientos[indice_actual])
                 indice_actual += 1
+                variable.set(str((indice_actual-1) // 2 + 1) + " " + str(movimientos[indice_actual-1]))
                 draw_board(board)
 
         def previous_move():
             nonlocal indice_actual
             if indice_actual > 0:
                 indice_actual -= 1
+                variable.set(str((indice_actual-1) // 2 + 1) + " " +  str(movimientos[indice_actual-1]))
                 board.pop()
                 draw_board(board)
-
+                    
         # Crea un widget Scrollbar
         scrollbar = tk.Scrollbar(frame_jugadas)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        listbox = tk.Listbox(frame_jugadas, height= 20)
-        listbox.pack(fill=tk.BOTH)
+        # listbox = tk.Listbox(frame_jugadas, height= 20)
+        # listbox.pack(fill=tk.BOTH)
+
+        treeview2= ttk.Treeview(frame_jugadas, yscrollcommand=scrollbar.set)
+        treeview2['columns'] = ("Turno", "Blancas", "Negras")
+
+        # Formatea las columnas
+        treeview2.column("#0", width=0, stretch=tk.NO)
+        treeview2.column("Turno", anchor=tk.W, width=40)
+        treeview2.column("Blancas", anchor=tk.W, width=60)
+        treeview2.column("Negras", anchor=tk.W, width=60)
+
+        # Crea los encabezados de las columnas
+        treeview2.heading("#0", text="", anchor=tk.W)
+        treeview2.heading("Turno", text="Turno", anchor=tk.W)
+        treeview2.heading("Blancas", text="Blancas", anchor=tk.W)
+        treeview2.heading("Negras", text="Negras", anchor=tk.W)
+
+        treeview2.tag_configure("highlight", background="yellow")
 
         # Añade las jugadas al frame
         for i in range(0, len(movimientos), 2):
@@ -146,16 +182,61 @@ def view_game():
                 movimiento_negras = movimientos[i + 1]
             else:
                 movimiento_negras = ''
-            jugada = f"{turno}. {movimiento_blancas} {movimiento_negras}"
-            listbox.insert(tk.END, jugada)
+            
+            treeview2.insert('', 'end', text=str(turno), values=(turno, movimiento_blancas, movimiento_negras))
 
-        btn_previous_move = tk.Button(frame_tablero, text="Previous", command=previous_move)
+        def change_highlighted_row():
+            # Remove highlight from current row
+            for child in treeview2.get_children():
+                if "highlight" in treeview2.item(child)["tags"]:
+                    treeview2.item(child, tags=())
+                    
+            # Highlight new row
+            for child in treeview2.get_children():
+                if treeview2.item(child)["text"] == str(((indice_actual - 1) // 2) + 1):
+                    treeview2.item(child, tags=("highlight",))
+
+        def update_label():
+            # Get the top 3 moves from Stockfish
+            info = engine.analyse(board, limit=chess.engine.Limit(time=1), multipv=3)
+            top_moves = [info[var]["pv"][0] for var in range(3)]
+            top_scores = [info[var]["score"].relative.score()/100 for var in range(3)]
+            # Update the label with the top moves and their scores
+            text = ""
+            for i, move in enumerate(top_moves):
+                text += f"{i+1}. {move} ({top_scores[i]:+.2f})\n"
+            label3.config(text=text)
+
+        def prev():
+            previous_move()
+            change_highlighted_row()
+            update_label()
+
+        def next():
+            next_move()
+            change_highlighted_row()
+            update_label()
+
+
+        btn_previous_move = tk.Button(frame_tablero, text="Previous", command=prev)
         btn_previous_move.pack(side=tk.LEFT)
 
-        btn_next_move = tk.Button(frame_tablero, text="Next", command=next_move)
+        btn_next_move = tk.Button(frame_tablero, text="Next", command=next)
         btn_next_move.pack(side=tk.LEFT)
 
-        scrollbar.config(command=listbox.yview)
+        label2 = tk.Label(frame_tablero, textvariable="   ")
+        label2.pack(side=tk.LEFT)
+
+        label = tk.Label(frame_tablero, textvariable=variable)
+        label.pack(side=tk.LEFT)
+
+        label3 = tk.Label(frame_modulo, text="")
+        label3.pack(side=tk.LEFT)
+
+
+        scrollbar.config(command=treeview2.yview)
+
+        treeview2.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         draw_board(board)
 
@@ -237,6 +318,7 @@ def mostrar_partidas():
         print(id[0])
 
 
+engine = chess.engine.SimpleEngine.popen_uci("stockfish/stockfish-windows-x86-64-avx2.exe")
 
 window = tk.Tk()
 window.title("Chess App")
@@ -311,5 +393,12 @@ def crear_tabla_partidas():
 crear_tabla_partidas()
 
 update_games_list()
+
+# Function to close the engine and the app
+def close_app():
+    engine.close()
+    window.destroy()
+
+window.protocol("WM_DELETE_WINDOW", close_app)
 
 window.mainloop()
