@@ -5,8 +5,11 @@ Aplicacion para el almacenamiento y visualización de partidas de ajedrez en for
 ## Requisitos
 
 python-chess
+
 Pillow
+
 tkinter
+
 sqlite3
 
 Normalmente tkinter y sqlite ya vienen instaladas con la distribución de python.
