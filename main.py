@@ -68,8 +68,9 @@ def add_game():
         # Guarda los cambios y cierra la conexión a la base de datos
         conn.commit()
         conn.close()
-        ventana_secundaria.destroy()
+        
         update_games_list()
+        ventana_secundaria.destroy()
 
 
 
