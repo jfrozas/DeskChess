@@ -1,8 +1,6 @@
 import tkinter as tk
-from tkinter import messagebox, filedialog
+from tkinter import filedialog
 from tkinter import ttk
-
-from chess import svg
 
 import sqlite3
 import chess.pgn
@@ -12,12 +10,15 @@ import os
 
 from PIL import ImageTk, Image
 
+from datetime import datetime
 
 import io
 
 def add_game():
     # Pide al usuario un archivo
     ruta_archivo = filedialog.askopenfilename(filetypes=[("PGN files", "*.pgn")])
+
+    entero_variable = tk.IntVar()
 
     # Comprueba si el usuario seleccionó un archivo
     if ruta_archivo:
@@ -34,6 +35,20 @@ def add_game():
 
         # Abre el archivo PGN
         with open(ruta_archivo) as pgn_file:
+
+            
+            ventana_secundaria = tk.Toplevel(window)
+            ventana_secundaria.geometry('200x100')
+            ventana_secundaria.title('Metiendo PGN')
+            ventana_secundaria.grid()
+
+            
+            # Crear etiqueta
+            etiqueta = ttk.Label(ventana_secundaria, textvariable=entero_variable)
+            etiqueta.grid(column=0, row=0, padx=10, pady=10)
+
+            entero_variable.set(0)
+
             while True:
                 # Lee una partida del archivo PGN
                 partida = chess.pgn.read_game(pgn_file)
@@ -45,10 +60,15 @@ def add_game():
                 # Inserta la partida en la base de datos
                 c.execute('INSERT INTO partidas (pgn) VALUES (?)', (str(partida),))
 
+                entero_variable.set(entero_variable.get() + 1)
+
+                window.update_idletasks()
+                ventana_secundaria.update_idletasks()
+
         # Guarda los cambios y cierra la conexión a la base de datos
         conn.commit()
         conn.close()
-
+        ventana_secundaria.destroy()
         update_games_list()
 
 
@@ -199,7 +219,7 @@ def view_game():
 
         def update_label():
             # Get the top 3 moves from Stockfish
-            info = engine.analyse(board, limit=chess.engine.Limit(time=1), multipv=3)
+            info = engine.analyse(board, limit=chess.engine.Limit(time=0.1), multipv=3)
             top_moves = [info[var]["pv"][0] for var in range(3)]
             top_scores = [info[var]["score"].relative.score()/100 for var in range(3)]
             # Update the label with the top moves and their scores
@@ -305,6 +325,10 @@ def update_games_list():
         # Inserta la información en el Treeview
         treeview_partidas.insert('', 'end', text=str(partida[0]), values=(evento, fecha, elo_blancas, blancas, resultado, negras, elo_negras))
 
+    conn.commit()
+    conn.close()
+
+
 def mostrar_partidas():
     # Crea una conexión a la base de datos SQLite
     conn = sqlite3.connect('partidas.db')
@@ -318,6 +342,27 @@ def mostrar_partidas():
     for id in ids:
         print(id[0])
 
+def treeview_sort_column(tv, col, reverse):
+    column_index = tv["columns"].index(col)
+    l = [(str(tv.item(k)["values"][column_index]), k) for k in tv.get_children('')]
+    l.sort(key=lambda t: t, reverse=reverse)
+    for index, (val, k) in enumerate(l):
+        tv.move(k, '', index)
+    tv.heading(col, command=lambda: treeview_sort_column(tv, col, not reverse))
+
+def sort():
+    treeview_sort_column(treeview_partidas, "Evento", False)
+
+def treeview_sort_column2(tv, col, reverse):
+    column_index = tv["columns"].index(col)
+    l = [(datetime.strptime(str(tv.item(k)["values"][column_index]), '%Y.%m.%d'), k) for k in tv.get_children('')]
+    l.sort(key=lambda t: t[0], reverse=reverse)
+    for index, (val, k) in enumerate(l):
+        tv.move(k, '', index)
+    tv.heading(col, command=lambda: treeview_sort_column(tv, col, not reverse))
+
+def sort2():
+    treeview_sort_column2(treeview_partidas, "Fecha", True)
 
 engine = chess.engine.SimpleEngine.popen_uci("stockfish/stockfish-windows-x86-64-avx2.exe")
 
@@ -342,6 +387,17 @@ btn_delete_game.pack(side=tk.LEFT)
 # btn_add_game = tk.Button(frame, text="Ver BD", command=mostrar_partidas)
 # btn_add_game.pack(side=tk.LEFT)
 
+frame2 = tk.Frame(window)
+frame2.pack()
+
+label3 = tk.Label(frame2, text="Filtros")
+label3.pack(side=tk.LEFT)
+
+btn_add_game = tk.Button(frame2, text="Evento", command=sort)
+btn_add_game.pack(side=tk.LEFT)
+
+btn_add_game = tk.Button(frame2, text="Fecha", command=sort2)
+btn_add_game.pack(side=tk.LEFT)
 
 # Crea un widget Scrollbar
 scrollbar = tk.Scrollbar(window)
