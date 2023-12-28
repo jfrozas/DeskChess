@@ -7,12 +7,15 @@ import chess.pgn
 import chess.engine
 
 import os
+import sys
 
 from PIL import ImageTk, Image
 
 from datetime import datetime
 
 import io
+
+script_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
 
 # Mete un archivo PNG en la BD
 def add_game():
@@ -151,9 +154,9 @@ def view_game():
                     piece = board.piece_at(chess.square(i, 7-j))
                     if piece is not None:
                         if piece.color == chess.WHITE:
-                            filename = os.path.join("Piezas", f"white_{str(piece)}.png")
+                            filename = os.path.join(script_dir, "piezas", f"white_{str(piece)}.png")
                         else:
-                            filename = os.path.join("Piezas", f"black_{str(piece)}.png")
+                            filename = os.path.join(script_dir, "piezas", f"black_{str(piece)}.png")
                         image = Image.open(filename)
                         image = image.resize((50, 50), Image.ANTIALIAS)
                         photo = ImageTk.PhotoImage(image)
@@ -395,7 +398,16 @@ engine = None
 # Ventana principal
 window = tk.Tk()
 window.title("DeskChess")
-window.iconbitmap('Piezas/logo.ico')
+
+ico_path = os.path.join(
+    os.path.dirname(sys.executable),
+    "logo.ico"
+)
+
+try:
+    window.iconbitmap(default=ico_path)
+except tk.TclError:
+    pass
 
 # Ajusta el tamaño de la ventana a 1920x1080
 window.geometry("1000x800")

@@ -2,3 +2,7 @@
 *.pgn
 a.txt
 stockfish/
+main.build/
+main.dist/
+main.onefile-build/
+DeskChess.exe
