@@ -111,6 +111,7 @@ def view_game():
         # Crea una nueva ventana para mostrar la partida
         ventana_partida = tk.Toplevel(window)
         ventana_partida.title(f"{partida.headers['White']} VS {partida.headers['Black']}")
+        ventana_partida.minsize(600, 450)
 
         # Crea cuatro frames
         frame_tablero = tk.Frame(ventana_partida)
@@ -226,17 +227,24 @@ def view_game():
                 if treeview2.item(child)["text"] == str(((indice_actual - 1) // 2) + 1):
                     treeview2.item(child, tags=("highlight",))
 
+        def selec_module():
+            global engine
+            modulo = filedialog.askopenfilename()
+            engine = chess.engine.SimpleEngine.popen_uci(modulo)
+
         # Llama al modulo, y pone las tres mejroe sjugadas con su puntuacion
         def update_label():
-            # Get the top 3 moves from Stockfish
-            info = engine.analyse(board, limit=chess.engine.Limit(time=0.1), multipv=3)
-            top_moves = [info[var]["pv"][0] for var in range(3)]
-            top_scores = [info[var]["score"].relative.score()/100 for var in range(3)]
-            # Update the label with the top moves and their scores
-            text = ""
-            for i, move in enumerate(top_moves):
-                text += f"{i+1}. {move} ({top_scores[i]:+.2f})\n"
-            label3.config(text=text)
+            global engine
+            if engine:
+                # Get the top 3 moves from Stockfish
+                info = engine.analyse(board, limit=chess.engine.Limit(time=0.1), multipv=3)
+                top_moves = [info[var]["pv"][0] for var in range(3)]
+                top_scores = [info[var]["score"].relative.score()/100 for var in range(3)]
+                # Update the label with the top moves and their scores
+                text = ""
+                for i, move in enumerate(top_moves):
+                    text += f"{i+1}. {move} ({top_scores[i]:+.2f})\n"
+                label3.config(text=text)
 
         #Funcion de boton previo
         def prev():
@@ -257,6 +265,9 @@ def view_game():
 
         btn_next_move = tk.Button(frame_tablero, text="Next", command=next)
         btn_next_move.pack(side=tk.LEFT)
+
+        btn_previous_move = tk.Button(frame_tablero, text="Modulo", command=selec_module)
+        btn_previous_move.pack(side=tk.LEFT)
 
         label2 = tk.Label(frame_tablero, textvariable="   ")
         label2.pack(side=tk.LEFT)
@@ -379,8 +390,7 @@ def treeview_sort_column2(tv, col, reverse):
 def sort2():
     treeview_sort_column2(treeview_partidas, "Fecha", True)
 
-# Motor de ajedrez
-engine = chess.engine.SimpleEngine.popen_uci("stockfish/stockfish-windows-x86-64-avx2.exe")
+engine = None
 
 # Ventana principal
 window = tk.Tk()
@@ -389,6 +399,7 @@ window.iconbitmap('Piezas/logo.ico')
 
 # Ajusta el tamaño de la ventana a 1920x1080
 window.geometry("1000x800")
+window.minsize(500, 450)
 
 frame = tk.Frame(window)
 frame.pack()
@@ -472,7 +483,8 @@ update_games_list()
 
 # Function to close the engine and the app -> Si no queda el modulo siempre encendido
 def close_app():
-    engine.close()
+    if engine:
+        engine.close()
     window.destroy()
 
 window.protocol("WM_DELETE_WINDOW", close_app)
