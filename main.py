@@ -14,7 +14,9 @@ from datetime import datetime
 
 import io
 
+# Mete un archivo PNG en la BD
 def add_game():
+
     # Pide al usuario un archivo
     ruta_archivo = filedialog.askopenfilename(filetypes=[("PGN files", "*.pgn")])
 
@@ -36,7 +38,7 @@ def add_game():
         # Abre el archivo PGN
         with open(ruta_archivo) as pgn_file:
 
-            
+            # Ventana secundaria para mostrar progreso (se cierra automaticamente)
             ventana_secundaria = tk.Toplevel(window)
             ventana_secundaria.geometry('200x100')
             ventana_secundaria.title('Metiendo PGN')
@@ -73,7 +75,7 @@ def add_game():
         ventana_secundaria.destroy()
 
 
-
+# Funcion para visualizar una partida
 def view_game():
     if treeview_partidas.selection():
         board = chess.Board()
@@ -82,6 +84,7 @@ def view_game():
 
         item = treeview_partidas.selection()[0]
         item_data = treeview_partidas.item(item)
+        # Coge el ID de la partida a ver
         text_value = item_data['text']
 
         # Crea una conexión a la base de datos SQLite
@@ -156,6 +159,7 @@ def view_game():
                         images[(i, j)] = photo
                         canvas.create_image(i*50+25, j*50+25, image=photo)
 
+        #Funcion para avanzar movimiento
         def next_move():
             nonlocal indice_actual
             if indice_actual < len(movimientos):
@@ -164,6 +168,7 @@ def view_game():
                 variable.set(str((indice_actual-1) // 2 + 1) + " " + str(movimientos[indice_actual-1]))
                 draw_board(board)
 
+        #Funcion para retroceder movimiento
         def previous_move():
             nonlocal indice_actual
             if indice_actual > 0:
@@ -179,6 +184,7 @@ def view_game():
         # listbox = tk.Listbox(frame_jugadas, height= 20)
         # listbox.pack(fill=tk.BOTH)
 
+        #Arbol para ver las jugadas
         treeview2= ttk.Treeview(frame_jugadas, yscrollcommand=scrollbar.set)
         treeview2['columns'] = ("Turno", "Blancas", "Negras")
 
@@ -194,6 +200,7 @@ def view_game():
         treeview2.heading("Blancas", text="Blancas", anchor=tk.W)
         treeview2.heading("Negras", text="Negras", anchor=tk.W)
 
+        # Tag para visualizar jugada actual
         treeview2.tag_configure("highlight", background="yellow")
 
         # Añade las jugadas al frame
@@ -207,6 +214,7 @@ def view_game():
             
             treeview2.insert('', 'end', text=str(turno), values=(turno, movimiento_blancas, movimiento_negras))
 
+        # Highlighting de la jugada
         def change_highlighted_row():
             # Remove highlight from current row
             for child in treeview2.get_children():
@@ -218,6 +226,7 @@ def view_game():
                 if treeview2.item(child)["text"] == str(((indice_actual - 1) // 2) + 1):
                     treeview2.item(child, tags=("highlight",))
 
+        # Llama al modulo, y pone las tres mejroe sjugadas con su puntuacion
         def update_label():
             # Get the top 3 moves from Stockfish
             info = engine.analyse(board, limit=chess.engine.Limit(time=0.1), multipv=3)
@@ -229,17 +238,20 @@ def view_game():
                 text += f"{i+1}. {move} ({top_scores[i]:+.2f})\n"
             label3.config(text=text)
 
+        #Funcion de boton previo
         def prev():
             previous_move()
             change_highlighted_row()
             update_label()
 
+        #Funcion de boton siguiente
         def next():
             next_move()
             change_highlighted_row()
             update_label()
 
-
+        #Botones y labels de esta ventana
+            
         btn_previous_move = tk.Button(frame_tablero, text="Previous", command=prev)
         btn_previous_move.pack(side=tk.LEFT)
 
@@ -252,9 +264,9 @@ def view_game():
         label = tk.Label(frame_tablero, textvariable=variable)
         label.pack(side=tk.LEFT)
 
+        # Modulo
         label3 = tk.Label(frame_modulo, text="")
         label3.pack(side=tk.LEFT)
-
 
         scrollbar.config(command=treeview2.yview)
 
@@ -265,7 +277,7 @@ def view_game():
         ventana_partida.mainloop()
 
 
-
+# Elimina partidas de la BD
 def delete_game():
     # Comprueba si hay un elemento seleccionado
     if treeview_partidas.selection():
@@ -294,7 +306,7 @@ def delete_game():
         # Elimina el ítem del Treeview
         treeview_partidas.delete(item)
 
-
+# Coge partidas de la BD y las mete en un treeview que se printea
 def update_games_list():
     # Crea una conexión a la base de datos SQLite
     conn = sqlite3.connect('partidas.db')
@@ -329,7 +341,7 @@ def update_games_list():
     conn.commit()
     conn.close()
 
-
+# Aux funcion para comprobar el funcionamiento de la BD
 def mostrar_partidas():
     # Crea una conexión a la base de datos SQLite
     conn = sqlite3.connect('partidas.db')
@@ -343,6 +355,7 @@ def mostrar_partidas():
     for id in ids:
         print(id[0])
 
+# Funcion de filtro de Evento
 def treeview_sort_column(tv, col, reverse):
     column_index = tv["columns"].index(col)
     l = [(str(tv.item(k)["values"][column_index]), k) for k in tv.get_children('')]
@@ -354,6 +367,7 @@ def treeview_sort_column(tv, col, reverse):
 def sort():
     treeview_sort_column(treeview_partidas, "Evento", False)
 
+# Funcion de filtro de Fecha
 def treeview_sort_column2(tv, col, reverse):
     column_index = tv["columns"].index(col)
     l = [(datetime.strptime(str(tv.item(k)["values"][column_index]), '%Y.%m.%d'), k) for k in tv.get_children('')]
@@ -365,10 +379,13 @@ def treeview_sort_column2(tv, col, reverse):
 def sort2():
     treeview_sort_column2(treeview_partidas, "Fecha", True)
 
+# Motor de ajedrez
 engine = chess.engine.SimpleEngine.popen_uci("stockfish/stockfish-windows-x86-64-avx2.exe")
 
+# Ventana principal
 window = tk.Tk()
 window.title("DeskChess")
+window.iconbitmap('Piezas/logo.ico')
 
 # Ajusta el tamaño de la ventana a 1920x1080
 window.geometry("1000x800")
@@ -376,6 +393,7 @@ window.geometry("1000x800")
 frame = tk.Frame(window)
 frame.pack()
 
+# Botones de la principal
 btn_add_game = tk.Button(frame, text="Añadir partida (PGN)", command=add_game)
 btn_add_game.pack(side=tk.LEFT)
 
@@ -385,12 +403,10 @@ btn_view_game.pack(side=tk.LEFT)
 btn_delete_game = tk.Button(frame, text="Eliminar partida", command=delete_game)
 btn_delete_game.pack(side=tk.LEFT)
 
-# btn_add_game = tk.Button(frame, text="Ver BD", command=mostrar_partidas)
-# btn_add_game.pack(side=tk.LEFT)
-
 frame2 = tk.Frame(window)
 frame2.pack()
 
+# Filtros
 label3 = tk.Label(frame2, text="Filtros")
 label3.pack(side=tk.LEFT)
 
@@ -404,6 +420,7 @@ btn_add_game.pack(side=tk.LEFT)
 scrollbar = tk.Scrollbar(window)
 scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
+# Partidas en el treeview
 treeview_partidas = ttk.Treeview(window, yscrollcommand=scrollbar.set)
 
 # Define las columnas
@@ -434,6 +451,7 @@ treeview_partidas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 # Conecta la Scrollbar al Treeview
 scrollbar.config(command=treeview_partidas.yview)
 
+# Por si es la primera vez ejecutandolo
 def crear_tabla_partidas():
     conn = sqlite3.connect('partidas.db')
     # Crea una tabla para almacenar las partidas
@@ -452,7 +470,7 @@ crear_tabla_partidas()
 
 update_games_list()
 
-# Function to close the engine and the app
+# Function to close the engine and the app -> Si no queda el modulo siempre encendido
 def close_app():
     engine.close()
     window.destroy()
