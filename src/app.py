@@ -113,7 +113,8 @@ class ChessApp:
 
 
     def set_icon(self):
-        self.ico_path = os.path.join(os.path.dirname(sys.executable),"logo.ico")
+        self.ico_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"logo.ico")
+        
         try:
             self.root.iconbitmap(default=self.ico_path)
         except tk.TclError:
