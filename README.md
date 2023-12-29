@@ -2,6 +2,9 @@
 
 Aplicacion para el almacenamiento y visualización de partidas de ajedrez en formato PGN.
 
+[![CodeFactor](https://www.codefactor.io/repository/github/jfrozas/DeskChess/badge)](https://www.codefactor.io/repository/github/jfrozas/DeskChess)
+![GitHub last commit](https://img.shields.io/github/last-commit/jfrozas/DeskChess)
+
 ## Requisitos
 
 python-chess
