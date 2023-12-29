@@ -88,32 +88,25 @@ class ChessApp:
 
             
     def sorter(self, column):
+
         def treeview_sort_column(tv, col, reverse, key=lambda t: t):
             column_index = col
-            l = [(key(tv.item(k)["values"][column_index]), k) for k in tv.get_children('')]
+
+            if col == 1:
+                l = [(datetime.strptime(str(tv.item(k)["values"][column_index]), '%Y.%m.%d'), k) for k in tv.get_children('')]
+            else:
+                l = [(key(tv.item(k)["values"][column_index]), k) for k in tv.get_children('')]
             l.sort(key=lambda t: t[0], reverse=reverse)
             for index, (val, k) in enumerate(l):
                 tv.move(k, '', index)
             tv.heading(col, command=lambda: treeview_sort_column(tv, col, not reverse, key))
-
-        def treeview_sort_column_date(tv, col, reverse):
-            column_index = col
-
-            l = [(datetime.strptime(str(tv.item(k)["values"][column_index]), '%Y.%m.%d'), k) for k in tv.get_children('')]
-            l.sort(key=lambda t: t[0], reverse=reverse)
-            for index, (val, k) in enumerate(l):
-                tv.move(k, '', index)
-            tv.heading(col, command=lambda: treeview_sort_column(tv, col, not reverse))
 
         column = int(column)
 
         if column not in self.sort_reverse:
             self.sort_reverse[column] = False
 
-        if column == 2:  
-            treeview_sort_column_date(self.treeview_partidas, column - 1, self.sort_reverse[column])
-        else:
-            treeview_sort_column(self.treeview_partidas, column - 1, self.sort_reverse[column])
+        treeview_sort_column(self.treeview_partidas, column - 1, self.sort_reverse[column])
 
         self.sort_reverse[column] = not self.sort_reverse[column]
 
