@@ -93,11 +93,11 @@ class ChessApp:
             column_index = col
 
             if col == 1:
-                l = [(datetime.strptime(str(tv.item(k)["values"][column_index]), '%Y.%m.%d'), k) for k in tv.get_children('')]
+                list = [(datetime.strptime(str(tv.item(k)["values"][column_index]), '%Y.%m.%d'), k) for k in tv.get_children('')]
             else:
-                l = [(key(tv.item(k)["values"][column_index]), k) for k in tv.get_children('')]
-            l.sort(key=lambda t: t[0], reverse=reverse)
-            for index, (val, k) in enumerate(l):
+                list = [(key(tv.item(k)["values"][column_index]), k) for k in tv.get_children('')]
+            list.sort(key=lambda t: t[0], reverse=reverse)
+            for index, (val, k) in enumerate(list):
                 tv.move(k, '', index)
             tv.heading(col, command=lambda: treeview_sort_column(tv, col, not reverse, key))
 
@@ -275,7 +275,7 @@ class ChessApp:
                 nonlocal index
                 if index > 0:
                     index -= 1
-                    text.set(str((index-1) // 2 + 1) + " " +  str(parsed_moves[index-1]))
+                    text.set(str((index-1) // 2 + 1) + " " + str(parsed_moves[index-1]))
                     board.pop()
                     draw_board(canvas, board, self.script_dir, self.images)
 
