@@ -377,7 +377,6 @@ class ChessApp:
 
             try:
                 c.execute('DELETE FROM bd WHERE id = ?', (id,))
-                print(f"DELETE FROM bd WHERE id = {id}")
             except Exception as e:
                 print(f"Error: {e}")
                 
