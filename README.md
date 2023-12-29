@@ -2,8 +2,10 @@
 
 Aplicacion para el almacenamiento y visualización de partidas de ajedrez en formato PGN.
 
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 [![CodeFactor](https://www.codefactor.io/repository/github/jfrozas/DeskChess/badge)](https://www.codefactor.io/repository/github/jfrozas/DeskChess)
 ![GitHub last commit](https://img.shields.io/github/last-commit/jfrozas/DeskChess)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/jfrozas/DeskChess)
 
 ## Requisitos
 
