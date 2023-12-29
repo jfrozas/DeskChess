@@ -65,13 +65,13 @@ class ChessApp:
         self.treeview_partidas.column("ELO Jugador 2", anchor=tk.W, width=20)
 
         self.treeview_partidas.heading("#0", text="", anchor=tk.W)
-        self.treeview_partidas.heading("Evento", text="Evento", anchor=tk.W, command=lambda: self.sorter('1'))
-        self.treeview_partidas.heading("Fecha", text="Fecha", anchor=tk.W, command=lambda: self.sorter('2'))
-        self.treeview_partidas.heading("ELO Jugador 1", text="ELO Jugador 1", anchor=tk.W, command=lambda: self.sorter('3'))
-        self.treeview_partidas.heading("Jugador 1", text="Jugador 1", anchor=tk.W, command=lambda: self.sorter('4'))
-        self.treeview_partidas.heading("Resultado", text="Resultado", anchor=tk.W, command=lambda: self.sorter('5'))
-        self.treeview_partidas.heading("Jugador 2", text="Jugador 2", anchor=tk.W, command=lambda: self.sorter('6'))
-        self.treeview_partidas.heading("ELO Jugador 2", text="ELO Jugador 2", anchor=tk.W, command=lambda: self.sorter('7'))
+        self.treeview_partidas.heading("Evento", text="Evento", anchor=tk.W, command=lambda: self.sorter('1', self.treeview_partidas))
+        self.treeview_partidas.heading("Fecha", text="Fecha", anchor=tk.W, command=lambda: self.sorter('2', self.treeview_partidas))
+        self.treeview_partidas.heading("ELO Jugador 1", text="ELO Jugador 1", anchor=tk.W, command=lambda: self.sorter('3', self.treeview_partidas))
+        self.treeview_partidas.heading("Jugador 1", text="Jugador 1", anchor=tk.W, command=lambda: self.sorter('4', self.treeview_partidas))
+        self.treeview_partidas.heading("Resultado", text="Resultado", anchor=tk.W, command=lambda: self.sorter('5', self.treeview_partidas))
+        self.treeview_partidas.heading("Jugador 2", text="Jugador 2", anchor=tk.W, command=lambda: self.sorter('6', self.treeview_partidas))
+        self.treeview_partidas.heading("ELO Jugador 2", text="ELO Jugador 2", anchor=tk.W, command=lambda: self.sorter('7', self.treeview_partidas))
 
         self.treeview_partidas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
@@ -80,14 +80,119 @@ class ChessApp:
         self.tab2 = ttk.Frame(self.notebook)
         self.notebook.add(self.tab2, text='Estadísticas de Jugadores')
 
+        self.top_frame2 = tk.Frame(self.tab2)
+        self.top_frame2.pack(side=tk.TOP)
+
+        self.button_player_stats = tk.Button(self.top_frame2, text="Generar estadisticas del jugador seleccionado", command=self.generate_player_stats)
+        self.button_player_stats.pack(side=tk.LEFT)
+        
+        self.scrollbarp = tk.Scrollbar(self.tab2)
+        self.scrollbarp.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.treeview_players = ttk.Treeview(self.tab2, yscrollcommand=self.scrollbarp.set)
+        self.treeview_players['columns'] = ("Player", "Total Games")
+
+        self.treeview_players.column("#0", width=0, stretch=tk.NO)
+        self.treeview_players.column("Player", anchor=tk.W, width=100)
+        self.treeview_players.column("Total Games", anchor=tk.W, width=100)
+
+        self.treeview_players.heading("#0", text="", anchor=tk.W)
+        self.treeview_players.heading("Player", text="Player", anchor=tk.W, command=lambda: self.sorter('1', self.treeview_players))
+        self.treeview_players.heading("Total Games", text="Total Games", anchor=tk.W)
+
+        self.treeview_players.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        self.scrollbarp.config(command=self.treeview_players.yview)
+
         self.script_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
 
         self.set_icon()
         self.create_initial_db()
         self.update_treeview()
+        self.add_players()
 
-            
-    def sorter(self, column):
+    def add_players(self):
+        
+        conn = sqlite3.connect('bd.db')
+        c = conn.cursor()
+
+        for i in self.treeview_players.get_children():
+            self.treeview_players.delete(i)
+
+        c.execute('''
+        SELECT player_name
+        FROM (
+            SELECT player1 AS player_name FROM bd
+            UNION
+            SELECT player2 AS player_name FROM bd
+        ) AS all_players
+        WHERE player_name IS NOT NULL
+        GROUP BY player_name;
+        ''')
+
+        unique_players = c.fetchall()
+
+        for player in unique_players:
+
+            player_name = player[0]
+            c.execute('''
+                SELECT COUNT(*) AS total_games
+                FROM bd
+                WHERE player1 = ? OR player2 = ?;
+            ''', (player_name, player_name))
+
+            total_games = c.fetchone()[0]
+
+            self.treeview_players.insert('', 'end', text='', values=(player[0], total_games))
+
+        conn.commit()
+        conn.close()
+
+    def generate_player_stats(self):
+        if self.treeview_players.selection():
+
+            item = self.treeview_players.selection()[0]
+            item_data = self.treeview_players.item(item)
+            name = item_data['values'][0]
+            totalgames = item_data['values'][1]
+
+            conn = sqlite3.connect('bd.db')
+            c = conn.cursor()
+
+            # Wins, Losses, Draws
+            c.execute('''
+                SELECT 
+                    SUM(CASE WHEN player1 = ? AND result = '1-0' THEN 1
+                            WHEN player2 = ? AND result = '0-1' THEN 1
+                            ELSE 0 END) AS wins,
+                    SUM(CASE WHEN player1 = ? AND result = '0-1' THEN 1
+                            WHEN player2 = ? AND result = '1-0' THEN 1
+                            ELSE 0 END) AS losses,
+                    SUM(CASE WHEN (player1 = ? OR player2 = ?) AND result = '1/2-1/2' THEN 1
+                            ELSE 0 END) AS draws
+                FROM bd;
+            ''', (name, name, name, name, name, name))
+
+            wins, losses, draws = c.fetchone()
+
+            print(name, totalgames, wins, losses, draws)
+
+            c.execute('''
+                SELECT 
+                    SUBSTR(movements, 1, 25) AS opening_moves,
+                    COUNT(*) AS opening_frequency
+                FROM bd
+                WHERE player1 = ?
+                GROUP BY opening_moves
+                ORDER BY opening_frequency DESC
+            ''', (name,))
+
+            # LIMIT 3; -- Change the limit based on how many top openings you want
+            white_openings = c.fetchall()
+
+            print(white_openings)
+
+    def sorter(self, column, tree):
 
         def treeview_sort_column(tv, col, reverse, key=lambda t: t):
             column_index = col
@@ -106,7 +211,7 @@ class ChessApp:
         if column not in self.sort_reverse:
             self.sort_reverse[column] = False
 
-        treeview_sort_column(self.treeview_partidas, column - 1, self.sort_reverse[column])
+        treeview_sort_column(tree, column - 1, self.sort_reverse[column])
 
         self.sort_reverse[column] = not self.sort_reverse[column]
 
@@ -203,6 +308,7 @@ class ChessApp:
             conn.close()
             
             self.update_treeview()
+            self.add_players()
             counter_window.destroy()
 
     def view_game(self):
@@ -210,7 +316,6 @@ class ChessApp:
         if self.treeview_partidas.selection():
             board = chess.Board()
             
-
             item = self.treeview_partidas.selection()[0]
             item_data = self.treeview_partidas.item(item)
             id = item_data['text']
