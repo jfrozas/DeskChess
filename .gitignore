@@ -8,3 +8,4 @@ main.onefile-build/
 DeskChess.exe
 new/
 __pycache__/
+.vscode/

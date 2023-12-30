@@ -5,7 +5,9 @@ import sqlite3
 import chess.pgn
 import chess.engine
 import os
+
 import sys
+sys.path.append('../DeskChess')
 
 from PIL import ImageTk, Image
 from datetime import datetime
@@ -221,7 +223,7 @@ class ChessApp:
         self.ico_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"logo.ico")
         
         try:
-            self.root.iconbitmap(default=self.ico_path)
+            self.root.iconbitmap("piezas\logo.ico")
         except tk.TclError:
             pass
 
@@ -535,9 +537,11 @@ def draw_board(canvas, board, script_dir, images):
             piece = board.piece_at(chess.square(i, 7-j))
             if piece is not None:
                 if piece.color == chess.WHITE:
-                    filename = os.path.join(script_dir, "piezas", f"white_{str(piece)}.png")
+                    # filename = os.path.join(script_dir, "piezas", f"white_{str(piece)}.png")
+                    filename = os.path.join("piezas", f"white_{str(piece)}.png")
                 else:
-                    filename = os.path.join(script_dir, "piezas", f"black_{str(piece)}.png")
+                    # filename = os.path.join(script_dir, "piezas", f"black_{str(piece)}.png")
+                    filename = os.path.join("piezas", f"black_{str(piece)}.png")
                 
                 try:
                     image = Image.open(filename)
