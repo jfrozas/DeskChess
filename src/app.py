@@ -6,10 +6,10 @@ import chess.pgn
 import chess.engine
 import os
 import sys
-sys.path.append('../DeskChess')
 
 from PIL import ImageTk, Image
 from datetime import datetime
+
 import io
 
 class ChessApp:
