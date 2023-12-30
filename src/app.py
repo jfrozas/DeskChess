@@ -198,11 +198,12 @@ class ChessApp:
             column_index = col
 
             if col == 1:
-                list = [(datetime.strptime(str(tv.item(k)["values"][column_index]), '%Y.%m.%d'), k) for k in tv.get_children('')]
+                val_list = [(datetime.strptime(str(tv.item(k)["values"][column_index]), '%Y.%m.%d'), k) for k in tv.get_children('')]
             else:
-                list = [(key(tv.item(k)["values"][column_index]), k) for k in tv.get_children('')]
-            list.sort(key=lambda t: t[0], reverse=reverse)
-            for index, (val, k) in enumerate(list):
+                val_list = [(key(tv.item(k)["values"][column_index]), k) for k in tv.get_children('')]
+
+            val_list.sort(key=lambda t: t[0], reverse=reverse)
+            for index, (val, k) in enumerate(val_list):
                 tv.move(k, '', index)
             tv.heading(col, command=lambda: treeview_sort_column(tv, col, not reverse, key))
 
@@ -319,12 +320,12 @@ class ChessApp:
 
         item = self.treeview_partidas.selection()[0]
         item_data = self.treeview_partidas.item(item)
-        id = item_data['text']
+        id_name = item_data['text']
 
         conn = sqlite3.connect('bd.db')
         c = conn.cursor()
 
-        c.execute('SELECT ELO1, player1, result, player2, ELO2, movements FROM bd WHERE id = ?', (id,))
+        c.execute('SELECT ELO1, player1, result, player2, ELO2, movements FROM bd WHERE id = ?', (id_name,))
         partida = c.fetchall()
 
 
@@ -474,13 +475,13 @@ class ChessApp:
         if self.treeview_partidas.selection():
             item = self.treeview_partidas.selection()[0]
             item_data = self.treeview_partidas.item(item)
-            id = item_data['text']
+            id_name = item_data['text']
 
             conn = sqlite3.connect('bd.db')
             c = conn.cursor()
 
             try:
-                c.execute('DELETE FROM bd WHERE id = ?', (id,))
+                c.execute('DELETE FROM bd WHERE id = ?', (id_name,))
             except Exception as e:
                 print(f"Error: {e}")
                 
