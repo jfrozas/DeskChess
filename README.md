@@ -1,6 +1,6 @@
 # DeskChess
 
-Aplicacion para el almacenamiento y visualización de partidas de ajedrez en formato PGN.
+DeskChess: Base de Datos de partidas de ajedrez que ofrece almacenamiento y visualización de partidas, ademas de estadísticas detalladas sobre jugadores.
 
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 [![CodeFactor](https://www.codefactor.io/repository/github/jfrozas/DeskChess/badge)](https://www.codefactor.io/repository/github/jfrozas/DeskChess)
