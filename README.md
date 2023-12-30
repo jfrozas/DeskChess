@@ -1,11 +1,23 @@
 # DeskChess
 
-Aplicacion para el almacenamiento y visualización de partidas de ajedrez en formato PGN.
+DeskChess: Base de Datos de partidas de ajedrez que ofrece almacenamiento y visualización de partidas, ademas de estadísticas detalladas sobre jugadores.
 
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 [![CodeFactor](https://www.codefactor.io/repository/github/jfrozas/DeskChess/badge)](https://www.codefactor.io/repository/github/jfrozas/DeskChess)
 ![GitHub last commit](https://img.shields.io/github/last-commit/jfrozas/DeskChess)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/jfrozas/DeskChess)
+
+
+## Funcionalidades
+
+- Carga y almacenamiento de partidas en formato PGN.
+- Visualización de partidas, con posible interacción de módulo para análisis.
+- Generación de estadísticas de los jugadores en la Base de Datos:
+  
+    - Partidas totales
+    - Partidas ganadas, perdidas y empatadas
+    - Aperturas mas jugadas
+
 
 ## Requisitos
 
