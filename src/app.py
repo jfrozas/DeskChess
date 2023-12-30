@@ -12,8 +12,6 @@ sys.path.append('../DeskChess')
 from PIL import ImageTk, Image
 from datetime import datetime
 
-import io
-
 class ChessApp:
     
     '''
@@ -315,160 +313,159 @@ class ChessApp:
 
     def view_game(self):
         
-        if self.treeview_partidas.selection():
-            board = chess.Board()
-            
-            item = self.treeview_partidas.selection()[0]
-            item_data = self.treeview_partidas.item(item)
-            id = item_data['text']
+        if not self.treeview_partidas.selection():
+            return
+        board = chess.Board()
 
-            conn = sqlite3.connect('bd.db')
-            c = conn.cursor()
+        item = self.treeview_partidas.selection()[0]
+        item_data = self.treeview_partidas.item(item)
+        id = item_data['text']
 
-            c.execute('SELECT ELO1, player1, result, player2, ELO2, movements FROM bd WHERE id = ?', (id,))
-            partida = c.fetchall()
+        conn = sqlite3.connect('bd.db')
+        c = conn.cursor()
+
+        c.execute('SELECT ELO1, player1, result, player2, ELO2, movements FROM bd WHERE id = ?', (id,))
+        partida = c.fetchall()
 
 
-            blancas = partida[0][1]
-            negras = partida[0][3]
-            resultado = partida[0][2]
-            elo_blancas = partida[0][0]
-            elo_negras = partida[0][4]
-            movements = partida[0][5].split()
+        blancas = partida[0][1]
+        negras = partida[0][3]
+        resultado = partida[0][2]
+        elo_blancas = partida[0][0]
+        elo_negras = partida[0][4]
+        movements = partida[0][5].split()
 
-            parsed_moves = []
-            for move_str in movements:
-                move = chess.Move.from_uci(move_str)
-                parsed_moves.append(move)
+        parsed_moves = []
+        for move_str in movements:
+            move = chess.Move.from_uci(move_str)
+            parsed_moves.append(move)
 
-            index = 0
-            text = tk.StringVar(value="No se ha hecho ningun movimiento")
+        index = 0
+        text = tk.StringVar(value="No se ha hecho ningun movimiento")
 
-            game_display = tk.Toplevel(self.root)
-            game_display.title(f"({elo_blancas}) {blancas} - {resultado} - {negras} ({elo_negras})")
-            game_display.minsize(600, 450)
+        game_display = tk.Toplevel(self.root)
+        game_display.title(f"({elo_blancas}) {blancas} - {resultado} - {negras} ({elo_negras})")
+        game_display.minsize(600, 450)
 
-           
-            board_frame = tk.Frame(game_display)
-            moves_frame = tk.Frame(game_display)
-            module_frame = tk.Frame(game_display)
-            empty_frame = tk.Frame(game_display)
 
-           
-            board_frame.grid(row=0, column=0, sticky='nsew')
-            moves_frame.grid(row=0, column=1, sticky='nsew')
-            module_frame.grid(row=1, column=0, sticky='nsew')
-            empty_frame.grid(row=1, column=1, sticky='nsew')
+        board_frame = tk.Frame(game_display)
+        moves_frame = tk.Frame(game_display)
+        module_frame = tk.Frame(game_display)
+        empty_frame = tk.Frame(game_display)
 
-            game_display.grid_rowconfigure(0, weight=1)
-            game_display.grid_rowconfigure(1, weight=1)
-            game_display.grid_columnconfigure(0, weight=1)
-            game_display.grid_columnconfigure(1, weight=1)
 
-            canvas = tk.Canvas(board_frame, width=400, height=400)
-            canvas.pack()
+        board_frame.grid(row=0, column=0, sticky='nsew')
+        moves_frame.grid(row=0, column=1, sticky='nsew')
+        module_frame.grid(row=1, column=0, sticky='nsew')
+        empty_frame.grid(row=1, column=1, sticky='nsew')
 
-            def next_move():
-                nonlocal index
-                if index < len(parsed_moves):
-                    board.push(parsed_moves[index])
-                    index += 1
-                    text.set(str((index-1) // 2 + 1) + " " + str(parsed_moves[index-1]))
+        game_display.grid_rowconfigure(0, weight=1)
+        game_display.grid_rowconfigure(1, weight=1)
+        game_display.grid_columnconfigure(0, weight=1)
+        game_display.grid_columnconfigure(1, weight=1)
 
-                    draw_board(canvas, board, self.script_dir, self.images)
+        canvas = tk.Canvas(board_frame, width=400, height=400)
+        canvas.pack()
 
-            
-            def previous_move():
-                nonlocal index
-                if index > 0:
-                    index -= 1
-                    text.set(str((index-1) // 2 + 1) + " " + str(parsed_moves[index-1]))
-                    board.pop()
-                    draw_board(canvas, board, self.script_dir, self.images)
+        def next_move():
+            nonlocal index
+            if index < len(parsed_moves):
+                board.push(parsed_moves[index])
+                index += 1
+                text.set(f"{str((index - 1) // 2 + 1)} {str(parsed_moves[index - 1])}")
 
-            
-            scrollbar = tk.Scrollbar(moves_frame)
-            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+                draw_board(canvas, board, self.script_dir, self.images)
 
-            treeview2= ttk.Treeview(moves_frame, yscrollcommand=scrollbar.set)
-            treeview2['columns'] = ("Turno", "Blancas", "Negras")
 
-            
-            treeview2.column("#0", width=0, stretch=tk.NO)
-            treeview2.column("Turno", anchor=tk.W, width=40)
-            treeview2.column("Blancas", anchor=tk.W, width=60)
-            treeview2.column("Negras", anchor=tk.W, width=60)
 
-           
-            treeview2.heading("#0", text="", anchor=tk.W)
-            treeview2.heading("Turno", text="Turno", anchor=tk.W)
-            treeview2.heading("Blancas", text="Blancas", anchor=tk.W)
-            treeview2.heading("Negras", text="Negras", anchor=tk.W)   
+        def previous_move():
+            nonlocal index
+            if index > 0:
+                index -= 1
+                text.set(f"{str((index - 1) // 2 + 1)} {str(parsed_moves[index - 1])}")
+                board.pop()
+                draw_board(canvas, board, self.script_dir, self.images)
 
-           
-            for i in range(0, len(parsed_moves), 2):
-                turno = i // 2 + 1
-                movimiento_blancas = parsed_moves[i]
-                if i + 1 < len(parsed_moves):
-                    movimiento_negras = parsed_moves[i + 1]
-                else:
-                    movimiento_negras = ''
-                
-                treeview2.insert('', 'end', text=str(turno), values=(turno, movimiento_blancas, movimiento_negras))
-  
-            def selec_module():
-                modulo = filedialog.askopenfilename()
-                self.engine = chess.engine.SimpleEngine.popen_uci(modulo)
 
-            
-            def update_label():
-                if self.engine:
-                  
-                    info = self.engine.analyse(board, limit=chess.engine.Limit(time=0.1), multipv=3)
-                    top_moves = [info[var]["pv"][0] for var in range(3)]
-                    top_scores = [info[var]["score"].relative.score()/100 for var in range(3)]
-                   
-                    text = ""
-                    for i, move in enumerate(top_moves):
-                        text += f"{i+1}. {move} ({top_scores[i]:+.2f})\n"
-                    label3.config(text=text)
 
-           
-            def prev():
-                previous_move()
-                update_label()
+        scrollbar = tk.Scrollbar(moves_frame)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-            
-            def next():
-                next_move()
-                update_label()   
+        treeview2= ttk.Treeview(moves_frame, yscrollcommand=scrollbar.set)
+        treeview2['columns'] = ("Turno", "Blancas", "Negras")
 
-            btn_previous_move = tk.Button(board_frame, text="Previous", command=prev)
-            btn_previous_move.pack(side=tk.LEFT)
 
-            btn_next_move = tk.Button(board_frame, text="Next", command=next)
-            btn_next_move.pack(side=tk.LEFT)
+        treeview2.column("#0", width=0, stretch=tk.NO)
+        treeview2.column("Turno", anchor=tk.W, width=40)
+        treeview2.column("Blancas", anchor=tk.W, width=60)
+        treeview2.column("Negras", anchor=tk.W, width=60)
 
-            btn_previous_move = tk.Button(board_frame, text="Modulo", command=selec_module)
-            btn_previous_move.pack(side=tk.LEFT)
 
-            label2 = tk.Label(board_frame, textvariable="   ")
-            label2.pack(side=tk.LEFT)
+        treeview2.heading("#0", text="", anchor=tk.W)
+        treeview2.heading("Turno", text="Turno", anchor=tk.W)
+        treeview2.heading("Blancas", text="Blancas", anchor=tk.W)
+        treeview2.heading("Negras", text="Negras", anchor=tk.W)   
 
-            label = tk.Label(board_frame, textvariable=text)
-            label.pack(side=tk.LEFT)
 
-          
-            label3 = tk.Label(module_frame, text="")
-            label3.pack(side=tk.LEFT)
+        for i in range(0, len(parsed_moves), 2):
+            turno = i // 2 + 1
+            movimiento_blancas = parsed_moves[i]
+            movimiento_negras = parsed_moves[i + 1] if i + 1 < len(parsed_moves) else ''
+            treeview2.insert('', 'end', text=str(turno), values=(turno, movimiento_blancas, movimiento_negras))
 
-            scrollbar.config(command=treeview2.yview)
+        def selec_module():
+            modulo = filedialog.askopenfilename()
+            self.engine = chess.engine.SimpleEngine.popen_uci(modulo)
 
-            treeview2.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-            draw_board(canvas, board, self.script_dir, self.images)
+        def update_label():
+            if self.engine:
 
-            game_display.mainloop()
+                info = self.engine.analyse(board, limit=chess.engine.Limit(time=0.1), multipv=3)
+                top_moves = [info[var]["pv"][0] for var in range(3)]
+                top_scores = [info[var]["score"].relative.score()/100 for var in range(3)]
+
+                text = ""
+                for i, move in enumerate(top_moves):
+                    text += f"{i+1}. {move} ({top_scores[i]:+.2f})\n"
+                label3.config(text=text)
+
+
+        def prev():
+            previous_move()
+            update_label()
+
+
+        def next():
+            next_move()
+            update_label()   
+
+        btn_previous_move = tk.Button(board_frame, text="Previous", command=prev)
+        btn_previous_move.pack(side=tk.LEFT)
+
+        btn_next_move = tk.Button(board_frame, text="Next", command=next)
+        btn_next_move.pack(side=tk.LEFT)
+
+        btn_previous_move = tk.Button(board_frame, text="Modulo", command=selec_module)
+        btn_previous_move.pack(side=tk.LEFT)
+
+        label2 = tk.Label(board_frame, textvariable="   ")
+        label2.pack(side=tk.LEFT)
+
+        label = tk.Label(board_frame, textvariable=text)
+        label.pack(side=tk.LEFT)
+
+
+        label3 = tk.Label(module_frame, text="")
+        label3.pack(side=tk.LEFT)
+
+        scrollbar.config(command=treeview2.yview)
+
+        treeview2.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        draw_board(canvas, board, self.script_dir, self.images)
+
+        game_display.mainloop()
 
  
 
