@@ -7,6 +7,18 @@ DeskChess: Base de Datos de partidas de ajedrez que ofrece almacenamiento y visu
 ![GitHub last commit](https://img.shields.io/github/last-commit/jfrozas/DeskChess)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/jfrozas/DeskChess)
 
+
+## Funcionalidades
+
+- Carga y almacenamiento de partidas en formato PGN.
+- Visualización de partidas, con posible interacción de módulo para análisis.
+- Generación de estadísticas de los jugadores en la Base de Datos:
+  
+    - Partidas totales
+    - Partidas ganadas, perdidas y empatadas
+    - Aperturas mas jugadas
+
+
 ## Requisitos
 
 python-chess
