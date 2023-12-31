@@ -32,7 +32,7 @@ jobs:
           python-version: ${{ matrix.python_version }}
 
       - name: Install dependencies
-        run: python -m pip install coverage
+        run: python -m pip install pytest coverage chess Pillow matplotlib
 
       - name: Run tests with coverage
         run: coverage run -m pytest
