@@ -48,7 +48,7 @@ jobs:
       - name: Calculate coverage percentage
         id: coverage_percentage
         run: |
-          "C:\ProgramData\chocolatey\lib\xmlstarlet.portable\tools\xmlstarlet" sel -t -v "sum(/coverage/packages/package[@name='src']/classes/class/@line-rate)" coverage.xml | gawk '{ printf("%.2f\n", $1 * 100) }'
+           xml.exe sel -t -v "sum(/coverage/packages/package[@name='src']/classes/class/@line-rate)" coverage.xml | gawk '{ printf("%.2f\n", $1 * 100) }'
         shell: bash
 
       - name: Create coverage badge
