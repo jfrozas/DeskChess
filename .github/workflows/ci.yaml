@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - main  
+      - main
 
 jobs:
   run_tests:
@@ -40,20 +40,13 @@ jobs:
       - name: Generate coverage report
         run: coverage xml
 
+      - name: Calculate coverage percentage
+        id: coverage_percentage
+        run: |
+          python -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage.xml'); total_lines = sum(int(elem.get('total')) for elem in tree.findall('.//line')); covered_lines = sum(int(elem.get('hits')) for elem in tree.findall('.//line')); coverage_percentage = round(covered_lines / total_lines * 100); print(coverage_percentage)"
+        shell: bash
+
       - name: Create coverage badge
         run: |
-          COVERAGE_PERCENTAGE=$(xmlstarlet sel -t -v "sum(//line/@hits) div sum(//line/@total)" coverage.xml)
-          COVERAGE_PERCENTAGE=${COVERAGE_PERCENTAGE%.*}  # Round percentage
-          curl -o coverage-badge.svg "https://img.shields.io/badge/coverage-$COVERAGE_PERCENTAGE%25-green.svg"
-
-      - name: Commit badge to repository
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: "Add coverage badge"
-          file_pattern: "coverage-badge.svg"
-          branch: "main"
-
-      - name: Push changes to repository
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          COVERAGE_PERCENTAGE=$(echo "${{ steps.coverage_percentage.outputs.stdout }}" | tr -d '\r')
+          curl -o coverage-badge.svg "https://img.shields.io/badge/Coverage-${COVERAGE_PERCENTAGE}%25-brightgreen"
