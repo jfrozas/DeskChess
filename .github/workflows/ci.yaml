@@ -28,7 +28,7 @@ jobs:
           python-version: ${{ matrix.python_version }}
       
       - name: Install dependencies
-        run: python -m pip install pytest chess tkinter Pillow sqlite3 .
+        run: python -m pip install pytest chess tkinter Pillow sqlite3
 
       - name: Run tests
         run: pytest
