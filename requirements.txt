@@ -2,3 +2,4 @@ python-chess
 Pillow
 tkinter
 sqlite3
+matplotlib

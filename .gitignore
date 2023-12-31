@@ -9,3 +9,5 @@ DeskChess.exe
 new/
 __pycache__/
 .vscode/
+.coverage
+coverage.xml
