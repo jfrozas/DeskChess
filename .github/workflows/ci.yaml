@@ -45,14 +45,8 @@ jobs:
           choco install -y xmlstarlet
           choco install -y gawk
 
-      - name: Calculate coverage percentage
-        id: coverage_percentage
+      - name: Generate Badge
         run: |
           COVERAGE_PERCENTAGE=$(xml.exe sel -t -v "sum(/coverage/packages/package[@name='src']/classes/class/@line-rate)" coverage.xml | gawk '{ printf("%.2f\n", $1) }')
-          echo "::set-output name=coverage_percentage::$COVERAGE_PERCENTAGE"
-        shell: bash
-
-      - name: Set coverage badge
-        run: |
-          COVERAGE_PERCENTAGE=${{ steps.coverage_percentage.outputs.coverage_percentage }}
-          curl -o coverage-badge.svg "https://img.shields.io/badge/Coverage-${COVERAGE_PERCENTAGE}%25-brightgreen"
+          # Create the badge using Shields.io with the calculated coverage percentage
+          curl -o coverage.svg -L "https://img.shields.io/badge/Coverage-$COVERAGE_PERCENTAGE%25-brightgreen"
