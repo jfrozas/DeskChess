@@ -4,7 +4,10 @@ from tkinter import ttk
 import sqlite3
 import chess.pgn
 import chess.engine
+import matplotlib.pyplot as plt
 import os
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,  NavigationToolbar2Tk
+import matplotlib.dates as mdates
 
 import sys
 sys.path.append('../DeskChess')
@@ -149,6 +152,8 @@ class ChessApp:
         conn.close()
 
     def generate_player_stats(self):
+
+
         if self.treeview_players.selection():
 
             item = self.treeview_players.selection()[0]
@@ -175,8 +180,6 @@ class ChessApp:
 
             wins, losses, draws = c.fetchone()
 
-            print(name, totalgames, wins, losses, draws)
-
             c.execute('''
                 SELECT 
                     SUBSTR(movements, 1, 25) AS opening_moves,
@@ -190,7 +193,62 @@ class ChessApp:
             # LIMIT 3; -- Change the limit based on how many top openings you want
             white_openings = c.fetchall()
 
-            print(white_openings)
+            c.execute('''
+                SELECT ELO1 AS elo, date
+                FROM bd
+                WHERE player1 = ?
+                UNION ALL
+                SELECT ELO2 AS elo, date
+                FROM bd
+                WHERE player2 = ?
+            ''', (name, name))
+
+            elo_dates = c.fetchall()
+
+            # Remove entries with invalid date formats (replace '2001.??.??' with a placeholder)
+            elo_dates = [(elo, date) for elo, date in elo_dates if '??' not in date]
+
+
+            elo_dates = [(elo, datetime.strptime(date, '%Y.%m.%d')) for elo, date in elo_dates]
+
+            # Sort elo_dates by date
+            elo_dates.sort(key=lambda x: x[1])
+
+            # Separate dates and ELOs for plotting
+            dates = [date for elo, date in elo_dates]
+            elos = [int(elo) for elo, date in elo_dates]
+
+            conn.commit()
+            conn.close()
+
+            fig, ax = plt.subplots()
+            ax.plot(dates, elos)
+            ax.set_title("ELO")
+            ax.set_xlabel("dates")
+            ax.set_ylabel("elos")
+
+            show_window = tk.Toplevel(self.root)
+            show_window.geometry('1000x800')
+            show_window.title(f"{name}")
+    
+            topframe_show = tk.Frame(show_window)
+            topframe_show.pack(fill="both", expand=True)
+
+            # Create the label
+            etiqueta2 = ttk.Label(topframe_show, text=f"{name}", font=("Arial", 24))
+            etiqueta2.pack(side="top", fill="both", expand=True)
+
+            # Configure the label to center its contents
+            etiqueta2.place(relx=0.5, rely=0.5, anchor="center")
+
+            elo_show = tk.Frame(show_window)
+            elo_show.pack(fill="both", expand=True)
+
+            canvas = FigureCanvasTkAgg(fig, master=elo_show)
+            canvas.draw()
+            canvas.get_tk_widget().pack()
+
+
 
     def sorter(self, column, tree):
 
@@ -489,6 +547,7 @@ class ChessApp:
             conn.close()
 
             self.treeview_partidas.delete(item)
+            self.add_players()
 
 
     def update_treeview(self):
@@ -519,6 +578,7 @@ class ChessApp:
     def close_app(self):
         if self.engine:
             self.engine.close()
+        self.root.quit()
         self.root.destroy()
 
 def draw_board(canvas, board, script_dir, images):
