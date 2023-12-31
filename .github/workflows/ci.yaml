@@ -30,9 +30,9 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python_version }}
-      
+
       - name: Install dependencies
-        run: python -m pip install pytest coverage chess Pillow matplotlib
+        run: python -m pip install coverage
 
       - name: Run tests with coverage
         run: coverage run -m pytest
@@ -40,21 +40,15 @@ jobs:
       - name: Generate coverage report
         run: coverage xml
 
+      - name: Install xmlstarlet and awk
+        run: |
+          choco install -y xmlstarlet
+          choco install -y gawk
+
       - name: Calculate coverage percentage
         id: coverage_percentage
         run: |
-          python -c "
-          import xml.etree.ElementTree as ET
-          tree = ET.parse('coverage.xml')
-          lines = tree.findall('.//line')
-          total_lines = sum(int(elem.get('total', 0)) for elem in lines)
-          covered_lines = sum(int(elem.get('hits', 0)) for elem in lines)
-          if total_lines == 0:
-              coverage_percentage = 100  # Assuming 100% coverage if total_lines is 0 to avoid division by zero
-          else:
-              coverage_percentage = round(covered_lines / total_lines * 100)
-          print(coverage_percentage)
-          "
+          xmlstarlet sel -t -v "sum(/coverage/packages/package[@name='src']/classes/class/@line-rate)" coverage.xml | gawk '{ printf("%.2f\n", $1 * 100) }'
         shell: bash
 
       - name: Create coverage badge
