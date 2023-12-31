@@ -40,7 +40,7 @@ jobs:
       - name: Generate coverage report
         run: coverage xml
 
-      - name: Install xmlstarlet and awk
+      - name: Install xmlstarlet and awk ?
         run: |
           choco install -y xmlstarlet
           choco install -y gawk
