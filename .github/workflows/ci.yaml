@@ -28,7 +28,7 @@ jobs:
           python-version: ${{ matrix.python_version }}
       
       - name: Install dependencies
-        run: python -m pip install pytest chess Pillow 
+        run: python -m pip install pytest chess Pillow matplotlib
 
       - name: Run tests
         run: pytest
