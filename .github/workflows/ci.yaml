@@ -40,13 +40,7 @@ jobs:
       - name: Generate coverage report
         run: coverage xml
 
-      - name: Install xmlstarlet and awk ?
-        run: |
-          choco install -y xmlstarlet
-          choco install -y gawk
-
-      - name: Generate Badge
-        run: |
-          COVERAGE_PERCENTAGE=$(xml.exe sel -t -v "sum(/coverage/packages/package[@name='src']/classes/class/@line-rate)" coverage.xml | gawk '{ printf("%.2f\n", $1) }')
-          # Create the badge using Shields.io with the calculated coverage percentage
-          curl -o coverage.svg -L "https://img.shields.io/badge/Coverage-$COVERAGE_PERCENTAGE%25-brightgreen"
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
