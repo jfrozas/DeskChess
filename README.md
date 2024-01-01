@@ -6,6 +6,7 @@ DeskChess: Base de Datos de partidas de ajedrez que ofrece almacenamiento y visu
 [![CodeFactor](https://www.codefactor.io/repository/github/jfrozas/DeskChess/badge)](https://www.codefactor.io/repository/github/jfrozas/DeskChess)
 ![GitHub last commit](https://img.shields.io/github/last-commit/jfrozas/DeskChess)
 [![codecov](https://codecov.io/gh/jfrozas/DeskChess/graph/badge.svg?token=9BM2GOHTEC)](https://codecov.io/gh/jfrozas/DeskChess)
+[![CI](https://github.com/jfrozas/DeskChess/actions/workflows/ci.yaml/badge.svg)](https://github.com/jfrozas/DeskChess/actions/workflows/ci.yaml)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/jfrozas/DeskChess)
 
 
