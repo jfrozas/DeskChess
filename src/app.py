@@ -18,10 +18,19 @@ from datetime import datetime
 class ChessApp:
     
     '''
-    PGN Visualizer APP. Developed using Pillow, python-chess, tkinter and sqlite3.
+    PGN Visualizer APP. Developed using Pillow, python-chess, matplolib, tkinter and sqlite3.
     '''
 
     def __init__(self, root):
+
+        """
+        Initializes the app
+
+        Args: 
+            self: 
+            root ( tk.Tk() ): Window created with tkinter to contain the aplication
+
+        """
 
         self.engine = None
         self.ico_path = None
@@ -115,6 +124,14 @@ class ChessApp:
         self.add_players()
 
     def add_players(self):
+
+        """
+        Adds players to the treeview_players to be displayed in the second tab
+
+        Args:
+            self:
+
+        """
         
         conn = sqlite3.connect('bd.db')
         c = conn.cursor()
@@ -152,7 +169,13 @@ class ChessApp:
         conn.close()
 
     def generate_player_stats(self):
+        """
+        For one player in treeview_players, fetches its stats and generates the according graphs, creating a new window.
 
+        Args: 
+            self:
+
+        """
 
         if self.treeview_players.selection():
 
@@ -252,6 +275,14 @@ class ChessApp:
 
     def sorter(self, column, tree):
 
+        """
+        Sorts a column in a given treeview
+        Args:
+            self:
+            column (int): given column of the treeview to sort
+            tree (ttk.Treeview): given treeview to sort
+        """
+
         def treeview_sort_column(tv, col, reverse, key=lambda t: t):
             column_index = col
 
@@ -277,6 +308,14 @@ class ChessApp:
 
 
     def set_icon(self):
+
+        """
+        Sets an icon to be placed as the logo of the application
+        Args:
+            self:
+
+        """
+
         self.ico_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"logo.ico")
         
         try:
@@ -286,6 +325,13 @@ class ChessApp:
 
 
     def create_initial_db(self):
+
+        """
+        Creates the initial database
+        Args:
+            self:
+        """
+
         conn = sqlite3.connect('bd.db')
         c = conn.cursor()
         c.execute('''
@@ -306,6 +352,15 @@ class ChessApp:
 
 
     def add_game(self):
+
+        """
+        Opens a dialog to select a PGN file, parses it, and adds the parsed fields to the database. 
+        Opens a new window to keep a counter with how many games are being added.
+
+        Args:
+            self:
+
+        """
 
         path = filedialog.askopenfilename(filetypes=[("PGN files", "*.pgn")])
         counter = tk.IntVar()
@@ -371,6 +426,13 @@ class ChessApp:
             counter_window.destroy()
 
     def view_game(self):
+
+        """
+        With a game selected from treeview_partidas, it will open a window to visualize the board, movements and (optionally) interact with the module to provide a movement/game score
+
+        Args:
+            self:
+        """
         
         if not self.treeview_partidas.selection():
             return
@@ -427,6 +489,11 @@ class ChessApp:
         canvas.pack()
 
         def next_move():
+
+            """
+            Performs the next move on the board
+            """
+
             nonlocal index
             if index < len(parsed_moves):
                 board.push(parsed_moves[index])
@@ -438,6 +505,11 @@ class ChessApp:
 
 
         def previous_move():
+
+            """
+            Performs the previous move on the board
+            """
+
             nonlocal index
             if index > 0:
                 index -= 1
@@ -473,11 +545,21 @@ class ChessApp:
             treeview2.insert('', 'end', text=str(turno), values=(turno, movimiento_blancas, movimiento_negras))
 
         def selec_module():
+
+            """
+            Pops a file select window to select a module, if the user wants
+            """
+
             modulo = filedialog.askopenfilename()
             self.engine = chess.engine.SimpleEngine.popen_uci(modulo)
 
 
         def update_label():
+
+            """
+            If a module was selected, calls the module to analyse the position and returns a label with the 3 best moves and their scores
+            """
+
             if self.engine:
 
                 info = self.engine.analyse(board, limit=chess.engine.Limit(time=0.1), multipv=3)
@@ -491,11 +573,21 @@ class ChessApp:
 
 
         def prev():
+
+            """
+            Used as a caller helper for the button previous, performs the previous move calling previous_move() and updates the label calling update_label()
+            """
+
             previous_move()
             update_label()
 
 
         def next():
+
+            """
+            Used as a caller helper for the button next, performs the previous move calling next_move() and updates the label calling update_label()
+            """
+
             next_move()
             update_label()   
 
@@ -530,6 +622,14 @@ class ChessApp:
 
     def delete_game(self):
 
+        """
+        Deletes a selected game from the database
+
+        Args:
+            self:
+
+        """
+
         if self.treeview_partidas.selection():
             item = self.treeview_partidas.selection()[0]
             item_data = self.treeview_partidas.item(item)
@@ -551,6 +651,15 @@ class ChessApp:
 
 
     def update_treeview(self):
+        
+        """
+        Updates the treeview with all the games from the database
+
+        Args:
+            self:
+
+        """
+
         conn = sqlite3.connect('bd.db')
         c = conn.cursor()
 
@@ -576,12 +685,30 @@ class ChessApp:
         conn.close()    
 
     def close_app(self):
+        
+        """
+        Closes the app and windows. If a module was selected, quits the module.
+
+        Args:
+            self:
+
+        """
+
         if self.engine:
             self.engine.close()
         self.root.quit()
         self.root.destroy()
 
 def draw_board(canvas, board, script_dir, images):
+    
+    """
+    Draws a chessboard and its pieces on a canvas
+
+    Args:
+        canvas (tk.Canvas()): tkinter canvas where the chess board will be drawn
+        board (chess.Board()): board state to be represented in the canvas
+        images (dictionary): dictionary which contains the loaded images
+    """
     
     canvas.delete("all")
     
@@ -612,6 +739,11 @@ def draw_board(canvas, board, script_dir, images):
                     print(f"Error loading image: {e}") 
 
 def main():
+    
+    """
+    Main function, creates a window with tk.Tk, creates the ChessApp and launches the mainloop.
+    """
+
     window = tk.Tk()
     app = ChessApp(window)
     window.protocol("WM_DELETE_WINDOW", app.close_app)
