@@ -110,7 +110,7 @@ class ChessApp:
 
         self.treeview_players.heading("#0", text="", anchor=tk.W)
         self.treeview_players.heading("Player", text="Player", anchor=tk.W, command=lambda: self.sorter('1', self.treeview_players))
-        self.treeview_players.heading("Total Games", text="Total Games", anchor=tk.W)
+        self.treeview_players.heading("Total Games", text="Total Games", anchor=tk.W, command=lambda: self.sorter('2', self.treeview_players))
 
         self.treeview_players.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
@@ -240,12 +240,34 @@ class ChessApp:
             # Separate dates and ELOs for plotting
             dates = [date for elo, date in elo_dates]
             elos = [int(elo) for elo, date in elo_dates]
+            
+            unique_combinations = set()
+            unique_dates = []
+            unique_elos = []
+
+            for a, b in zip(dates, elos):
+                combination = (a, b)
+                if combination not in unique_combinations:
+                    unique_combinations.add(combination)
+                    unique_dates.append(a)
+                    unique_elos.append(b)
+
+            for a, b in zip(unique_dates, unique_elos):
+                print(a, b)
 
             conn.commit()
             conn.close()
 
             fig, ax = plt.subplots()
-            ax.plot(dates, elos)
+
+            if len(unique_elos) == 1:
+                # If only one value, create a scatter plot
+                ax.scatter(unique_dates, unique_elos, label="Elo", color='blue')
+            else:
+                # If multiple values, create a line plot
+                ax.plot(unique_dates, unique_elos, label="Elo", color='blue')
+
+            ax.plot(unique_dates, unique_elos, color='blue')
             ax.set_title("ELO")
             ax.set_xlabel("dates")
             ax.set_ylabel("elos")
@@ -285,8 +307,8 @@ class ChessApp:
 
         def treeview_sort_column(tv, col, reverse, key=lambda t: t):
             column_index = col
-
-            if col == 1:
+            # 
+            if col == 1 and tv == self.treeview_partidas:
                 val_list = [(datetime.strptime(str(tv.item(k)["values"][column_index]), '%Y.%m.%d'), k) for k in tv.get_children('')]
             else:
                 val_list = [(key(tv.item(k)["values"][column_index]), k) for k in tv.get_children('')]
@@ -401,6 +423,12 @@ class ChessApp:
                     fecha = partida.headers['Date']
                     evento = partida.headers['Event']
                     movements = list(partida.mainline_moves())
+
+                    try:
+                        datetime.strptime(fecha, '%Y.%m.%d')
+                    except ValueError:
+                        # If the date doesn't follow the format, skip to the next iteration
+                        continue
 
                     movements_texto = ' '.join(str(move) for move in movements)
 
